@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
-	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/gorilla/mux"
+	"github.com/yuin/goldmark"
 )
 
 type Item struct {
@@ -31,10 +35,28 @@ func main() {
 	r.HandleFunc("/items/{id}/approve", approveItem).Methods("PUT")
 	r.HandleFunc("/items/{id}/reject", rejectItem).Methods("PUT")
 	r.HandleFunc("/items", listItems).Methods("GET")
+	r.HandleFunc("/", rootHandler).Methods("GET")
 
 	log.Printf("Serving at Port %s\n", port)
 	http.ListenAndServe(":"+port, r)
 }
+
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fileContent, err := ioutil.ReadFile("README.md")
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := goldmark.Convert(fileContent, &buf); err != nil {
+		http.Error(w, "Failed to convert markdown", http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
+}
+
 func createItem(w http.ResponseWriter, r *http.Request) {
 	var item Item
 	w.Header().Set("Content-Type", "application/json")
