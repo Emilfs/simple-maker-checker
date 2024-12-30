@@ -1,0 +1,103 @@
+openapi: 3.0.0
+info:
+  title: Message Approval System API
+  description: A RESTful API for managing messages that require approval before being sent.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /items:
+    post:
+      summary: Create a new message item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '201':
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Invalid request payload
+        '409':
+          description: Item already exists
+    get:
+      summary: List all message items
+      responses:
+        '200':
+          description: A list of message items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+  /items/{id}/approve:
+    put:
+      summary: Approve a message item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          description: Item not found
+  /items/{id}/reject:
+    put:
+      summary: Reject a message item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Message has been approved before
+        '404':
+          description: Item not found
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - id
+        - message
+        - recipient_id
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the message item
+        message:
+          type: string
+          description: The content of the message
+        recipient_id:
+          type: string
+          description: The identifier of the recipient
+        status:
+          type: string
+          description: The current status of the message item (pending, approved, rejected)
+          enum:
+            - pending
+            - approved
+            - rejected
